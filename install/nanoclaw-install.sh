@@ -48,9 +48,10 @@ msg_info "Installing Claude Code CLI"
 $STD su - nanoclaw -c "curl -fsSL https://claude.ai/install.sh | bash"
 msg_ok "Installed Claude Code CLI"
 
-msg_info "Cloning NanoClaw v2 repository"
-$STD su - nanoclaw -c "git clone https://github.com/qwibitai/nanoclaw.git /home/nanoclaw/nanoclaw"
-msg_ok "Cloned NanoClaw"
+msg_info "Fetching NanoClaw release"
+fetch_and_deploy_gh_release "nanoclaw" "glifocat/nanoclaw-glifocat" "tarball" "latest" "/home/nanoclaw/nanoclaw"
+$STD chown -R nanoclaw:nanoclaw /home/nanoclaw/nanoclaw
+msg_ok "Fetched NanoClaw release"
 
 msg_info "Installing Node dependencies"
 $STD su - nanoclaw -c "export COREPACK_ENABLE_DOWNLOAD_PROMPT=0; cd /home/nanoclaw/nanoclaw && pnpm install --prefer-frozen-lockfile"
