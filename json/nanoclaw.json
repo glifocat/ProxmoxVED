@@ -2,15 +2,15 @@
   "name": "NanoClaw",
   "slug": "nanoclaw",
   "categories": [22, 20],
-  "date_created": "2026-05-04",
+  "date_created": "2026-05-19",
   "type": "ct",
   "updateable": true,
   "privileged": false,
   "interface_port": null,
-  "documentation": "https://github.com/nanocoai/nanoclaw#readme",
-  "website": "https://github.com/nanocoai/nanoclaw",
+  "documentation": "https://docs.nanoclaw.dev",
+  "website": "https://nanoclaw.dev",
   "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/nanoclaw.webp",
-  "description": "Self-hosted Claude Code agent that connects to Discord, Telegram, Matrix and other chat platforms. Spawns an isolated Docker container per session and routes conversations to a Claude agent runtime.",
+  "description": "AI assistant that runs agents in isolated per-session Linux containers and bridges them to messaging apps (WhatsApp, Telegram, Slack, Discord, Matrix, Gmail) plus a local CLI. Built on Anthropic's Claude Agent SDK; OpenAI Codex, OpenCode (OpenRouter/Google/DeepSeek), and local Ollama models are pluggable via post-install skills.",
   "install_methods": [
     {
       "type": "default",
@@ -31,7 +31,7 @@
   },
   "notes": [
     {
-      "text": "After install, run the interactive setup wizard: pct enter <CT_ID> then su - nanoclaw -c 'cd nanoclaw && bash nanoclaw.sh'. The wizard configures Discord, Telegram or Matrix credentials.",
+      "text": "After install, run the interactive setup wizard: 'pct enter <CT_ID>' then 'machinectl shell nanoclaw@' then 'cd nanoclaw && bash nanoclaw.sh'. The wizard pairs your first channel (WhatsApp, Telegram, Slack, Discord, Matrix, Gmail, or local CLI) and registers your Anthropic credential. Note: 'machinectl shell' is required (not 'su -') so the systemd user session has DBUS_SESSION_BUS_ADDRESS / XDG_RUNTIME_DIR populated for the NanoClaw verify step.",
       "type": "info"
     },
     {
