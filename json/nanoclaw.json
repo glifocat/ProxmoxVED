@@ -1,0 +1,51 @@
+{
+  "name": "NanoClaw",
+  "slug": "nanoclaw",
+  "categories": [20, 22],
+  "date_created": "2026-09-11",
+  "type": "ct",
+  "updateable": false,
+  "privileged": false,
+  "interface_port": null,
+  "documentation": "https://docs.nanoclaw.dev/",
+  "website": "https://nanoclaw.dev/",
+  "repository": "https://github.com/nanocoai/nanoclaw",
+  "logo": "https://cdn.jsdelivr.net/gh/selfhst/icons@main/webp/nanoclaw.webp",
+  "description": "NanoClaw is an AI assistant that runs agents in isolated containers and connects them to messaging channels. This helper prepares a full Git checkout of upstream main for personal development, with Node.js, pnpm and the Docker agent runtime installed directly in an unprivileged Debian LXC.",
+  "install_methods": [
+    {
+      "type": "default",
+      "script": "ct/nanoclaw.sh",
+      "config_path": "/opt/nanoclaw/.env",
+      "resources": {
+        "cpu": 2,
+        "ram": 8192,
+        "hdd": 40,
+        "os": "Debian",
+        "version": "13"
+      }
+    }
+  ],
+  "default_credentials": {
+    "username": null,
+    "password": null
+  },
+  "notes": [
+    {
+      "text": "Fresh development installation only. The installer refuses an existing /opt/nanoclaw, /home/nanoclaw or nanoclaw account. It does not migrate older installations.",
+      "type": "info"
+    },
+    {
+      "text": "Complete setup from the Proxmox host: 'pct enter <CT_ID>', then 'machinectl shell nanoclaw@', then 'cd /opt/nanoclaw && bash nanoclaw.sh'. Use this login session so the upstream wizard can install and verify its systemd user service. Credentials, OneCLI, agent images and channels are configured by that wizard.",
+      "type": "info"
+    },
+    {
+      "text": "NanoClaw runs natively in the LXC. Its agents and OneCLI require Docker, with LXC nesting and keyctl enabled. The nanoclaw developer account belongs to the Docker group, which grants root-equivalent access inside the LXC. No account password is set by this helper.",
+      "type": "warning"
+    },
+    {
+      "text": "Helper updates are disabled to protect local development work. Follow the checkout's .claude/skills/update-nanoclaw/SKILL.md for staged integration, backups, migrations and service recovery. Stop a manually running development host before updating.",
+      "type": "warning"
+    }
+  ]
+}
