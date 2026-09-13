@@ -39,13 +39,28 @@ function update_script() {
   exit 1
 }
 
+# Remember the caller's mode before build_container exports MODE=default,
+# which also happens when a person chooses defaults in the container wizard.
+nanoclaw_setup_interactive=false
+if [[ -t 0 && -t 1 ]] && ! is_unattended; then
+  nanoclaw_setup_interactive=true
+fi
+
 start
 build_container
 description
 
 msg_ok "Completed Successfully!\n"
-echo -e "${CREATING}${GN}${APP} development checkout is prepared at /opt/nanoclaw.${CL}"
-echo -e "${INFO}${YW}Complete authentication, agent setup and service installation with the interactive wizard:${CL}"
-echo -e "${TAB}${GATEWAY}${BGN}pct enter ${CT_ID}${CL}"
-echo -e "${TAB}${GATEWAY}${BGN}machinectl shell nanoclaw@${CL}"
-echo -e "${TAB}${GATEWAY}${BGN}cd /opt/nanoclaw && bash nanoclaw.sh${CL}"
+echo -e "${CREATING}${GN}${APP} development checkout is prepared at /home/nanoclaw/nanoclaw.${CL}"
+echo -e "${INFO}${YW}NanoClaw's wizard completes authentication, agent setup and service installation.${CL}"
+
+# Clear only the provisioning mode for this prompt; retain the caller's
+# unattended flags. A timeout leaves setup for later.
+if [[ "$nanoclaw_setup_interactive" == true ]] && MODE='' mode='' prompt_confirm "Start NanoClaw setup now?" "n"; then
+  if ! pct exec "$CT_ID" --keep-env 0 -- machinectl shell nanoclaw@ /usr/bin/bash -lc 'cd /home/nanoclaw/nanoclaw && exec bash nanoclaw.sh'; then
+    msg_warn "NanoClaw setup exited with an error. The prepared checkout is available to resume."
+  fi
+fi
+
+echo -e "${INFO}${YW}To open NanoClaw setup from the Proxmox host:${CL}"
+echo -e "${TAB}${GATEWAY}${BGN}pct exec ${CT_ID} --keep-env 0 -- machinectl shell nanoclaw@ /usr/bin/bash -lc 'cd /home/nanoclaw/nanoclaw && exec bash nanoclaw.sh'${CL}"
