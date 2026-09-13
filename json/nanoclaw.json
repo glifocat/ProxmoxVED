@@ -16,7 +16,7 @@
     {
       "type": "default",
       "script": "ct/nanoclaw.sh",
-      "config_path": "/opt/nanoclaw/.env",
+      "config_path": "/home/nanoclaw/nanoclaw/.env",
       "resources": {
         "cpu": 2,
         "ram": 8192,
@@ -36,7 +36,7 @@
       "type": "info"
     },
     {
-      "text": "Complete setup from the Proxmox host: 'pct enter <CT_ID>', then 'machinectl shell nanoclaw@', then 'cd /opt/nanoclaw && bash nanoclaw.sh'. Use this login session so the upstream wizard can install and verify its systemd user service. Credentials, OneCLI, agent images and channels are configured by that wizard.",
+      "text": "The checkout lives at /home/nanoclaw/nanoclaw. Interactive installs offer to open NanoClaw's wizard immediately as the nanoclaw user; declining, timing out or running unattended leaves setup for later. The helper prints one command to resume from the Proxmox host. The wizard configures credentials, OneCLI, agent images, channels and the systemd user service.",
       "type": "info"
     },
     {
