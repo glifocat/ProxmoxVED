@@ -1,0 +1,112 @@
+#!/usr/bin/env bash
+_cs_boot="${COMMUNITY_SCRIPTS_CORE_DIR:-$(dirname "${BASH_SOURCE[0]}")/../../core}/core/build.func"
+source "$_cs_boot" 2>/dev/null || source <(curl -fsSL "${COMMUNITY_SCRIPTS_CORE_URL:-https://raw.githubusercontent.com/community-scripts/core/main}/core/build.func")
+# Copyright (c) 2021-2026 community-scripts ORG
+# Author: glifocat
+# License: MIT | https://github.com/community-scripts/ProxmoxVED/raw/main/LICENSE
+# Source: https://github.com/nanocoai/nanoclaw
+
+APP="NanoClaw"
+var_tags="${var_tags:-ai;agent;bots}"
+var_cpu="${var_cpu:-2}"
+var_ram="${var_ram:-8192}"
+var_disk="${var_disk:-40}"
+var_os="${var_os:-debian}"
+var_version="${var_version:-13}"
+#var_arm64="${var_arm64:-no}" # unset = ask the user; set yes/no only when verified
+var_unprivileged="${var_unprivileged:-1}"
+var_nesting="${var_nesting:-1}"
+var_keyctl="${var_keyctl:-1}"
+
+header_info "$APP"
+variables
+color
+catch_errors
+
+function update_script() {
+  header_info
+  check_container_storage
+  check_container_resources
+
+  if [[ ! -d /opt/nanoclaw ]]; then
+    msg_error "No ${APP} Installation Found!"
+    exit
+  fi
+
+  if check_for_gh_release "nanoclaw" "nanocoai/nanoclaw"; then
+    # NanoClaw keeps installed channel, provider and gateway payloads inside
+    # its checkout and updates through its own transaction
+    # (scripts/update-nanoclaw.ts): stage and validate the release, then stop
+    # the service and agents, snapshot state, rebuild, stamp the upgrade
+    # marker and restart. Replacing the tree from a tarball would drop those
+    # payloads and trip NanoClaw's startup gate.
+    cd /opt/nanoclaw || exit
+    NANOCLAW_USER=(runuser -u nanoclaw -- env "XDG_RUNTIME_DIR=/run/user/$(id -u nanoclaw)")
+
+    msg_info "Fetching NanoClaw ${CHECK_UPDATE_RELEASE}"
+    $STD "${NANOCLAW_USER[@]}" git fetch -q upstream "refs/tags/${CHECK_UPDATE_RELEASE}:refs/tags/${CHECK_UPDATE_RELEASE}"
+    # Setup copies payloads into the tree without committing them, and the
+    # transaction refuses to start from a dirty checkout.
+    if [[ -n "$("${NANOCLAW_USER[@]}" git status --porcelain)" ]]; then
+      $STD "${NANOCLAW_USER[@]}" git add --all
+      $STD "${NANOCLAW_USER[@]}" git commit -q -m "chore: record installed NanoClaw payloads"
+    fi
+    msg_ok "Fetched NanoClaw ${CHECK_UPDATE_RELEASE}"
+
+    msg_info "Staging NanoClaw ${CHECK_UPDATE_RELEASE}"
+    NANOCLAW_UPDATE=$("${NANOCLAW_USER[@]}" pnpm exec tsx scripts/update-nanoclaw.ts prepare --upstream-ref "$CHECK_UPDATE_RELEASE" --strategy merge 2>/dev/null) || {
+      msg_error "NanoClaw could not stage ${CHECK_UPDATE_RELEASE}; the running install is unchanged. Run /update-nanoclaw as the nanoclaw user in /opt/nanoclaw for details."
+      exit
+    }
+    NANOCLAW_UPDATE_ID=$(jq -r '.id' <<<"$NANOCLAW_UPDATE")
+    msg_ok "Staged NanoClaw ${CHECK_UPDATE_RELEASE}"
+
+    if [[ "$(jq -r '.requirements | length' <<<"$NANOCLAW_UPDATE")" != "0" ]]; then
+      $STD "${NANOCLAW_USER[@]}" pnpm exec tsx scripts/update-nanoclaw.ts abandon --id "$NANOCLAW_UPDATE_ID"
+      msg_warn "NanoClaw ${CHECK_UPDATE_RELEASE} has breaking changes that need manual steps; the running install is unchanged:"
+      jq -r '.requirements[] | "  - \(.description | ltrimstr("- "))"' <<<"$NANOCLAW_UPDATE"
+      msg_custom "ℹ️" "${YW}" "Finish this update with /update-nanoclaw from a coding agent, as the nanoclaw user in /opt/nanoclaw."
+      exit
+    fi
+
+    msg_info "Validating NanoClaw ${CHECK_UPDATE_RELEASE}"
+    $STD "${NANOCLAW_USER[@]}" pnpm exec tsx scripts/update-nanoclaw.ts validate --id "$NANOCLAW_UPDATE_ID" || {
+      $STD "${NANOCLAW_USER[@]}" pnpm exec tsx scripts/update-nanoclaw.ts abandon --id "$NANOCLAW_UPDATE_ID"
+      msg_error "NanoClaw ${CHECK_UPDATE_RELEASE} failed validation; the running install is unchanged."
+      exit
+    }
+    msg_ok "Validated NanoClaw ${CHECK_UPDATE_RELEASE}"
+
+    msg_info "Updating NanoClaw"
+    $STD "${NANOCLAW_USER[@]}" pnpm exec tsx scripts/update-nanoclaw.ts cutover --id "$NANOCLAW_UPDATE_ID"
+    $STD "${NANOCLAW_USER[@]}" pnpm exec tsx scripts/update-nanoclaw.ts finish --id "$NANOCLAW_UPDATE_ID"
+    $STD "${NANOCLAW_USER[@]}" pnpm exec tsx scripts/update-nanoclaw.ts cleanup --id "$NANOCLAW_UPDATE_ID"
+    echo "${CHECK_UPDATE_RELEASE#v}" >~/.nanoclaw
+    msg_ok "Updated NanoClaw to ${CHECK_UPDATE_RELEASE}"
+  fi
+  exit
+}
+
+# build_container exports MODE=default for the install phase, also after an
+# interactive choice of default settings, so the caller's mode is read first.
+nanoclaw_setup_interactive=false
+if [[ -t 0 && -t 1 ]] && ! is_unattended; then
+  nanoclaw_setup_interactive=true
+fi
+
+start
+build_container
+description
+
+msg_ok "Completed Successfully!\n"
+echo -e "${CREATING}${GN}${APP} is installed at /opt/nanoclaw.${CL}"
+echo -e "${INFO}${YW}NanoClaw's setup wizard completes authentication, agent setup and the service.${CL}"
+
+if [[ "$nanoclaw_setup_interactive" == true ]] && MODE='' mode='' prompt_confirm "Start NanoClaw setup now?" "n"; then
+  if ! pct exec "$CT_ID" --keep-env 0 -- machinectl shell nanoclaw@ /usr/bin/bash -lc 'cd /opt/nanoclaw && exec bash nanoclaw.sh'; then
+    msg_warn "NanoClaw setup exited with an error. Resume it with the command below."
+  fi
+fi
+
+echo -e "${INFO}${YW}To open NanoClaw setup from the Proxmox host:${CL}"
+echo -e "${TAB}${GATEWAY}${BGN}pct exec ${CT_ID} --keep-env 0 -- machinectl shell nanoclaw@ /usr/bin/bash -lc 'cd /opt/nanoclaw && exec bash nanoclaw.sh'${CL}"
