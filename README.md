@@ -1,3 +1,19 @@
+# NanoClaw helper for Proxmox VE
+
+This fork hosts the Proxmox VE helper for [NanoClaw](https://github.com/nanocoai/nanoclaw). It is maintained by the NanoClaw team and is not part of community-scripts; please do not report problems with it to the community-scripts project.
+
+Run on the Proxmox VE host shell:
+
+```bash
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/glifocat/nanoclaw-proxmox/nanoclaw-helper-v1/ct/nanoclaw.sh)"
+```
+
+It creates an unprivileged Debian 13 LXC (2 cores, 8 GiB RAM, 40 GiB disk, nesting and keyctl on), installs Docker, Node.js 22 and the latest NanoClaw release in `/opt/nanoclaw`, and offers to start NanoClaw's setup wizard. To update NanoClaw later, run `update` inside the container. The helper is published from the `nanoclaw-helper-v1` tag, and the community-scripts engine it uses is pinned to a fixed commit.
+
+Docs: [Installation](https://docs.nanoclaw.dev/installation). Support: [NanoClaw issues](https://github.com/nanocoai/nanoclaw/issues) or the [Discord](https://discord.gg/VDdww8qS42). Scripts: [`ct/nanoclaw.sh`](ct/nanoclaw.sh), [`install/nanoclaw-install.sh`](install/nanoclaw-install.sh).
+
+---
+
 # 🚧 ProxmoxVED Helper-Scripts (Development Repository)
 
 **Warning: This repository is under active development and is not intended for production use. Changes may occur at any time!**
