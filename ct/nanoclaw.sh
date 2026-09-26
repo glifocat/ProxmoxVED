@@ -54,8 +54,16 @@ function update_script() {
     # Setup copies payloads into the tree without committing them, and the
     # transaction refuses to start from a dirty checkout.
     if [[ -n "$("${NANOCLAW_USER[@]}" git status --porcelain)" ]]; then
+      # The startup gate pins the upgrade marker to HEAD, so a marker that was
+      # current must follow this commit; otherwise a deferred or failed update
+      # would leave a service that refuses to restart.
+      NANOCLAW_MARKER=$("${NANOCLAW_USER[@]}" pnpm exec tsx scripts/upgrade-state.ts get 2>/dev/null | jq -r '.commit // empty' 2>/dev/null)
+      NANOCLAW_HEAD=$("${NANOCLAW_USER[@]}" git rev-parse HEAD)
       $STD "${NANOCLAW_USER[@]}" git add --all
       $STD "${NANOCLAW_USER[@]}" git commit -q -m "chore: record installed NanoClaw payloads"
+      if [[ -n "$NANOCLAW_MARKER" && "$NANOCLAW_MARKER" == "$NANOCLAW_HEAD" ]]; then
+        $STD "${NANOCLAW_USER[@]}" pnpm exec tsx scripts/upgrade-state.ts set "" proxmox-helper
+      fi
     fi
     msg_ok "Fetched NanoClaw ${CHECK_UPDATE_RELEASE}"
 
