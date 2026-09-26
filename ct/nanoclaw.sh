@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# Published from the glifocat/ProxmoxVED fork, not community-scripts. Both
-# roots are pinned so the script, its install step, the engine and the
+# Published from the glifocat/nanoclaw-proxmox fork, not community-scripts.
+# Both roots are pinned so the script, its install step, the engine and the
 # container's later `update` all run the tested revision.
-COMMUNITY_SCRIPTS_URL="${COMMUNITY_SCRIPTS_URL:-https://raw.githubusercontent.com/glifocat/ProxmoxVED/nanoclaw-helper-v1}"
+COMMUNITY_SCRIPTS_URL="${COMMUNITY_SCRIPTS_URL:-https://raw.githubusercontent.com/glifocat/nanoclaw-proxmox/nanoclaw-helper-v1}"
 COMMUNITY_SCRIPTS_CORE_URL="${COMMUNITY_SCRIPTS_CORE_URL:-https://raw.githubusercontent.com/community-scripts/core/6f9088594d1541019858da37b864e610c568daf2}"
 export COMMUNITY_SCRIPTS_URL COMMUNITY_SCRIPTS_CORE_URL
 _cs_boot="${COMMUNITY_SCRIPTS_CORE_DIR:-$(dirname "${BASH_SOURCE[0]}")/../../core}/core/build.func"
